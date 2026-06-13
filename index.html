@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090d16">
+  <title>SafeKeep Checkroom — Convention Bag & Lunch Token System</title>
+  <meta name="description" content="Local-first offline PWA to manage lunch bags, luggage, and personal items at convention checkroom stations.">
+  <link rel="stylesheet" href="index.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+  
+  <div class="app-container">
+    
+    <!-- HEADER -->
+    <header>
+      <div class="brand-section">
+        <div class="brand-logo">
+          <!-- Safe / Vault Box Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v3"></path>
+            <path d="M12 19v3"></path>
+            <path d="M2 12h3"></path>
+            <path d="M19 12h3"></path>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1 id="convention-title-display">SafeKeep Checkroom</h1>
+          <p id="convention-subtitle-display">Convention Bag & Token System</p>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <!-- Quick Session Switcher Badge -->
+        <div class="session-badge" id="quick-session-badge" title="Change active day/session">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span id="quick-session-text">Loading Session...</span>
+        </div>
+        
+        <!-- Theme Toggle -->
+        <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle light/dark theme">
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+    
+    <!-- NAVIGATION TABS -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-view="dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="9"></rect>
+          <rect x="14" y="3" width="7" height="5"></rect>
+          <rect x="14" y="12" width="7" height="9"></rect>
+          <rect x="3" y="16" width="7" height="5"></rect>
+        </svg>
+        Dashboard
+      </button>
+      <button class="nav-tab" data-view="checkin" id="nav-tab-checkin">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        Check In
+      </button>
+      <button class="nav-tab" data-view="checkout" id="nav-tab-checkout">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <polyline points="9 11 12 14 22 4"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+        Check Out
+      </button>
+      <button class="nav-tab" data-view="history">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        Log / History
+      </button>
+      <button class="nav-tab" data-view="settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Settings
+      </button>
+    </nav>
+    
+    <!-- MAIN CONTENT PANELS -->
+    <main>
+      
+      <!-- 1. DASHBOARD VIEW -->
+      <section class="view-panel active" id="dashboard-view">
+        <div class="dashboard-grid">
+          
+          <div class="stat-card held">
+            <div class="stat-info">
+              <p>Currently Held</p>
+              <div class="stat-value" id="stats-held">0</div>
+            </div>
+            <div class="stat-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+          </div>
+          
+          <div class="stat-card returned">
+            <div class="stat-info">
+              <p>Returned Today</p>
+              <div class="stat-value" id="stats-returned">0</div>
+            </div>
+            <div class="stat-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          
+          <div class="stat-card total">
+            <div class="stat-info">
+              <p>Total Registered</p>
+              <div class="stat-value" id="stats-total">0</div>
+            </div>
+            <div class="stat-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+          </div>
+          
+        </div>
+        
+        <div class="quick-actions-card">
+          <h2>Quick Station Actions</h2>
+          <div class="quick-btn-group">
+            <button class="btn-large btn-checkin" id="dash-btn-checkin">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Check In Item
+            </button>
+            <button class="btn-large btn-checkout" id="dash-btn-checkout">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <polyline points="22 11.08 22 12 21 12 21 19 3 19 3 5 16 5"></polyline>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Check Out Item
+            </button>
+          </div>
+        </div>
+        
+        <div class="section-grid">
+          
+          <!-- Category breakdown panel -->
+          <div class="dashboard-panel">
+            <h2>
+              Item Type Breakdown
+              <span class="badge-count" id="stats-breakdown-count">0 Items</span>
+            </h2>
+            
+            <div class="breakdown-list">
+              <div class="breakdown-item">
+                <div class="breakdown-label">
+                  <div class="breakdown-name-wrapper">
+                    <span>🍱 Lunch Box</span>
+                  </div>
+                  <span id="breakdown-val-lunch">0</span>
+                </div>
+                <div class="breakdown-bar-bg">
+                  <div class="breakdown-bar-fill" id="breakdown-bar-lunch"></div>
+                </div>
+              </div>
+              
+              <div class="breakdown-item">
+                <div class="breakdown-label">
+                  <div class="breakdown-name-wrapper">
+                    <span>🎒 Bag / Backpack</span>
+                  </div>
+                  <span id="breakdown-val-bag">0</span>
+                </div>
+                <div class="breakdown-bar-bg">
+                  <div class="breakdown-bar-fill" id="breakdown-bar-bag"></div>
+                </div>
+              </div>
+              
+              <div class="breakdown-item">
+                <div class="breakdown-label">
+                  <div class="breakdown-name-wrapper">
+                    <span>🧳 Luggage / Trolley</span>
+                  </div>
+                  <span id="breakdown-val-luggage">0</span>
+                </div>
+                <div class="breakdown-bar-bg">
+                  <div class="breakdown-bar-fill" id="breakdown-bar-luggage"></div>
+                </div>
+              </div>
+              
+              <div class="breakdown-item">
+                <div class="breakdown-label">
+                  <div class="breakdown-name-wrapper">
+                    <span>📦 Other</span>
+                  </div>
+                  <span id="breakdown-val-other">0</span>
+                </div>
+                <div class="breakdown-bar-bg">
+                  <div class="breakdown-bar-fill" id="breakdown-bar-other"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Recent activity panel -->
+          <div class="dashboard-panel">
+            <h2>
+              Recent Session Log
+              <span class="panel-header-action" id="dash-view-all-logs">View All</span>
+            </h2>
+            <div class="activity-feed" id="dashboard-recent-activity">
+              <!-- Dynamically populated -->
+              <p class="empty-search-state" style="padding: 1.5rem;">No recent activity in this session.</p>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+      
+      <!-- 2. CHECK IN VIEW -->
+      <section class="view-panel" id="checkin-view">
+        <div class="card-container">
+          <div class="card-title-bar">
+            <h2>Check In New Item</h2>
+            <p>Assign a token and record item description for safety and fast collection.</p>
+          </div>
+          
+          <form id="checkin-form">
+            <!-- Active Token Preview Banner -->
+            <div class="token-preview-banner">
+              <span>Next Token in Sequence:</span>
+              <span class="token-preview-number" id="checkin-token-preview">F1-001</span>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Select Item Type</label>
+              <div class="item-type-grid">
+                <div class="item-type-option selected" data-type="Lunch Box">
+                  <span class="item-type-icon">🍱</span>
+                  <span class="item-type-name">Lunch Box</span>
+                </div>
+                <div class="item-type-option" data-type="Bag">
+                  <span class="item-type-icon">🎒</span>
+                  <span class="item-type-name">Bag</span>
+                </div>
+                <div class="item-type-option" data-type="Luggage">
+                  <span class="item-type-icon">🧳</span>
+                  <span class="item-type-name">Luggage</span>
+                </div>
+                <div class="item-type-option" data-type="Other">
+                  <span class="item-type-icon">📦</span>
+                  <span class="item-type-name">Other</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="owner-name-input">Owner Name (Optional)</label>
+              <input type="text" class="form-input" id="owner-name-input" placeholder="e.g. Brother John Doe, Sister Smith" autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="notes-input">Item Notes & Identifiers (Highly Recommended)</label>
+              <textarea class="form-textarea" id="notes-input" placeholder="e.g. Red Milton flask, Blue container inside yellow bag, Name tag attached..." autocomplete="off"></textarea>
+              
+              <!-- Quick Description Suggestions -->
+              <div class="quick-notes-container" id="quick-note-pills">
+                <span class="quick-note-pill" data-text="Milton bottle inside">🍱 Milton bottle inside</span>
+                <span class="quick-note-pill" data-text="Blue Tupperware dabba">🍱 Blue Tupperware dabba</span>
+                <span class="quick-note-pill" data-text="Steel hotbox lunch carrier">🍱 Steel hotbox lunch carrier</span>
+                <span class="quick-note-pill" data-text="Black backpack with lock">🎒 Black backpack</span>
+                <span class="quick-note-pill" data-text="Red trolley bag on wheels">🧳 Red trolley bag</span>
+                <span class="quick-note-pill" data-text="Name tag attached">🏷️ Name tag attached</span>
+              </div>
+            </div>
+            
+            <div class="button-group">
+              <button type="button" class="btn btn-secondary" id="checkin-btn-reset">Clear Form</button>
+              <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Confirm & Generate Token
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+      
+      <!-- 3. CHECK OUT VIEW -->
+      <section class="view-panel" id="checkout-view">
+        
+        <div class="checkout-search-box">
+          <label class="form-label" for="checkout-search">Scan or Enter Token Number</label>
+          <div class="checkout-search-wrapper">
+            <svg class="checkout-search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="checkout-search-input" id="checkout-search" placeholder="e.g. F1-042" autocomplete="off" autofocus>
+            <button class="btn btn-secondary" id="checkout-clear-search-btn" type="button">Clear</button>
+          </div>
+        </div>
+        
+        <div class="checkout-result-area">
+          <!-- Dynamically filled with search result card or empty state -->
+          <div class="empty-search-state" id="checkout-search-status">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <h3>Ready for Token Search</h3>
+            <p>Type a token number (e.g. <b>F1-001</b>) or select from the active items list below.</p>
+          </div>
+        </div>
+        
+        <!-- Active items quick select -->
+        <div class="held-list-section">
+          <div class="section-title-row">
+            <h3>Currently Held Items <span class="badge-count" id="active-list-count">0</span></h3>
+            <input type="text" class="form-input" id="active-list-filter" placeholder="Quick filter by owner/notes..." style="max-width: 250px; padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+          </div>
+          
+          <div class="held-items-cards-grid" id="checkout-active-grid">
+            <!-- Dynamically populated -->
+            <p class="empty-search-state" style="grid-column: 1/-1; padding: 2rem;">No items currently checked in for this session.</p>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 4. LOG / HISTORY VIEW -->
+      <section class="view-panel" id="history-view">
+        
+        <div class="history-filters">
+          
+          <div class="filter-group filter-search-group">
+            <label for="history-search">Search Text</label>
+            <input type="text" class="form-input" id="history-search" placeholder="Search Token, Owner Name or Notes...">
+          </div>
+          
+          <div class="filter-group">
+            <label for="history-filter-status">Status</label>
+            <select class="form-select" id="history-filter-status">
+              <option value="all">All Records</option>
+              <option value="held" selected>Held (Active)</option>
+              <option value="returned">Returned (Closed)</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="history-filter-type">Item Type</label>
+            <select class="form-select" id="history-filter-type">
+              <option value="all">All Types</option>
+              <option value="Lunch Box">🍱 Lunch Box</option>
+              <option value="Bag">🎒 Bag</option>
+              <option value="Luggage">🧳 Luggage</option>
+              <option value="Other">📦 Other</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="history-filter-session">Session Context</label>
+            <select class="form-select" id="history-filter-session">
+              <option value="current">Active Session Only</option>
+              <option value="all">All Sessions / Days</option>
+            </select>
+          </div>
+          
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div>
+            <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);" id="history-results-count">Showing 0 records</span>
+          </div>
+          
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary" id="history-btn-export-csv" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Export CSV
+            </button>
+            <button class="btn btn-secondary" id="history-btn-export-json" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Export Backup (.json)
+            </button>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Type</th>
+                <th>Owner Name</th>
+                <th>Notes / Description</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Status</th>
+                <th style="width: 120px; text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- Dynamically populated -->
+              <tr>
+                <td colspan="8" class="empty-search-state" style="text-align: center; padding: 3rem;">No history matches found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
+      <!-- 5. SETTINGS VIEW -->
+      <section class="view-panel" id="settings-view">
+        <div class="settings-grid">
+          
+          <!-- Configuration panel -->
+          <div class="settings-panel">
+            <h3>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Active Session Settings
+            </h3>
+            <p class="settings-info-text">Configure the active day and session context. Tokens are auto-generated with prefixes matching these options (e.g. F1, S2, U1).</p>
+            
+            <form id="settings-session-form">
+              <div class="form-group">
+                <label class="form-label" for="settings-active-day">Active Convention Day</label>
+                <select class="form-select" id="settings-active-day">
+                  <option value="F">Friday (F)</option>
+                  <option value="S">Saturday (S)</option>
+                  <option value="U">Sunday (U)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="settings-active-session">Active Session</label>
+                <select class="form-select" id="settings-active-session">
+                  <option value="1">Session 1 (Morning / Lunch Break)</option>
+                  <option value="2">Session 2 (Afternoon / End of Day)</option>
+                </select>
+              </div>
+              
+              <button type="submit" class="btn btn-primary">
+                Save Active Context
+              </button>
+            </form>
+          </div>
+          
+          <!-- Convention info panel -->
+          <div class="settings-panel">
+            <h3>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                <line x1="4" y1="22" x2="4" y2="15"></line>
+              </svg>
+              Convention Details
+            </h3>
+            <p class="settings-info-text">Setup the name of the convention. This appears on the dashboard header and on printed slips handed to owners.</p>
+            
+            <form id="settings-convention-form">
+              <div class="form-group">
+                <label class="form-label" for="settings-convention-name">Convention Name</label>
+                <input type="text" class="form-input" id="settings-convention-name" placeholder="e.g. 2026 Regional Convention" required>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="settings-convention-subtitle">Subtitle / Venue</label>
+                <input type="text" class="form-input" id="settings-convention-subtitle" placeholder="e.g. Checkroom Department / Assembly Hall" required>
+              </div>
+              
+              <button type="submit" class="btn btn-primary">
+                Update Branding
+              </button>
+            </form>
+          </div>
+          
+          <!-- Database Backup panel -->
+          <div class="settings-panel">
+            <h3>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Database Backup & Restore
+            </h3>
+            <p class="settings-info-text">Since all data is saved locally in your browser, it is highly recommended to download a backup at the end of the day or session.</p>
+            
+            <div class="file-upload-wrapper">
+              <div class="file-upload-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Click to Choose Backup File (.json)</span>
+                <span style="font-size: 0.75rem; font-weight: normal; margin-top: 5px;">This will merge or restore records</span>
+                <input type="file" id="settings-import-file" accept=".json">
+              </div>
+            </div>
+            
+            <div class="button-group" style="margin-top: 0;">
+              <button class="btn btn-secondary" id="settings-btn-export-json" style="flex: 1;">
+                Export JSON Backup
+              </button>
+            </div>
+          </div>
+          
+          <!-- Danger zone -->
+          <div class="settings-panel danger-zone">
+            <h3>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              Danger Zone
+            </h3>
+            <p class="settings-info-text">Perform factory reset operations. These actions are destructive and cannot be undone once executed.</p>
+            
+            <div class="button-group" style="flex-direction: column; gap: 0.75rem;">
+              <button class="btn btn-danger" id="settings-btn-reset-counters" style="width: 100%; justify-content: flex-start;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
+                Reset Token Counters (Keep Records)
+              </button>
+              <button class="btn btn-danger" id="settings-btn-clear-db" style="width: 100%; justify-content: flex-start;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                Wipe Entire Database (Factory Reset)
+              </button>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+      
+    </main>
+    
+    <!-- FOOTER -->
+    <footer>
+      <p>SafeKeep Checkroom — A Local-First Offline PWA designed for JW Conventions. Taps into browser LocalStorage. Made with 🤍 for the Checkroom Department.</p>
+    </footer>
+    
+  </div>
+
+  <!-- LARGE TOKEN POPUP DIALOG (AFTER CHECK-IN) -->
+  <div class="token-modal-overlay" id="token-modal" style="display: none;">
+    <div class="token-modal">
+      <div class="token-modal-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2>Item Checked In Successfully!</h2>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">Hand the matching token slip to the owner.</p>
+      
+      <div>
+        <span class="large-token-display" id="modal-token-number">F1-001</span>
+      </div>
+      
+      <div class="token-modal-details">
+        <div class="token-modal-details-row">
+          <span class="token-modal-details-label">Type:</span>
+          <span class="token-modal-details-val" id="modal-item-type">Lunch Box</span>
+        </div>
+        <div class="token-modal-details-row">
+          <span class="token-modal-details-label">Owner:</span>
+          <span class="token-modal-details-val" id="modal-owner-name">—</span>
+        </div>
+        <div class="token-modal-details-row">
+          <span class="token-modal-details-label">Notes:</span>
+          <span class="token-modal-details-val" id="modal-notes">—</span>
+        </div>
+        <div class="token-modal-details-row">
+          <span class="token-modal-details-label">Date/Time:</span>
+          <span class="token-modal-details-val" id="modal-datetime">13 June, 05:45 PM</span>
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button class="btn btn-secondary" id="modal-btn-print" style="flex: 1;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          Print Slip
+        </button>
+        <button class="btn btn-primary" id="modal-btn-close" style="flex: 1;">
+          Next Check In
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTEXT SELECTION DIALOG (QUICK SWITCH) -->
+  <div class="token-modal-overlay" id="session-switch-modal" style="display: none;">
+    <div class="token-modal" style="max-width: 420px; text-align: left;">
+      <h2 style="margin-bottom: 0.5rem; text-align: center;">Change Station Session</h2>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem;">Select the active Day and Session prefix for the incoming flow.</p>
+      
+      <form id="quick-session-form">
+        <div class="form-group">
+          <label class="form-label" for="quick-active-day">Day</label>
+          <select class="form-select" id="quick-active-day">
+            <option value="F">Friday (F)</option>
+            <option value="S">Saturday (S)</option>
+            <option value="U">Sunday (U)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="quick-active-session">Session</label>
+          <select class="form-select" id="quick-active-session">
+            <option value="1">Session 1 (Morning / Lunch Break)</option>
+            <option value="2">Session 2 (Afternoon / End of Day)</option>
+          </select>
+        </div>
+        
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" id="quick-session-btn-close" style="flex: 1;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Switch Session</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT NOTES DIALOG (HISTORY EDIT) -->
+  <div class="token-modal-overlay" id="edit-item-modal" style="display: none;">
+    <div class="token-modal" style="max-width: 480px; text-align: left;">
+      <h2 style="margin-bottom: 0.5rem; text-align: center;">Edit Item Details</h2>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem;" id="edit-modal-token-label">Editing Token: F1-001</p>
+      
+      <form id="edit-item-form">
+        <input type="hidden" id="edit-item-id">
+        
+        <div class="form-group">
+          <label class="form-label" for="edit-item-type">Item Type</label>
+          <select class="form-select" id="edit-item-type">
+            <option value="Lunch Box">🍱 Lunch Box</option>
+            <option value="Bag">🎒 Bag</option>
+            <option value="Luggage">🧳 Luggage</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="edit-owner-name">Owner Name</label>
+          <input type="text" class="form-input" id="edit-owner-name" placeholder="Owner Name">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="edit-notes">Notes / Identifiers</label>
+          <textarea class="form-textarea" id="edit-notes" placeholder="Description"></textarea>
+        </div>
+        
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" id="edit-btn-cancel" style="flex: 1;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- PRINT ONLY CONTAINER (WINDOW.PRINT OVERLAY) -->
+  <div id="print-slip-container">
+    <div class="print-slip">
+      <div class="print-slip-title" id="print-convention-name">Convention Name</div>
+      <div style="font-size: 8pt; text-transform: uppercase;" id="print-convention-sub">Checkroom Dept</div>
+      <div>
+        <span class="print-slip-token" id="print-token">F1-000</span>
+      </div>
+      <div class="print-slip-details">
+        <div class="print-slip-row">
+          <span class="print-slip-label">Type:</span>
+          <span id="print-type">Lunch Box</span>
+        </div>
+        <div class="print-slip-row">
+          <span class="print-slip-label">Owner:</span>
+          <span id="print-owner">—</span>
+        </div>
+        <div class="print-slip-row">
+          <span class="print-slip-label">Notes:</span>
+          <span id="print-desc">—</span>
+        </div>
+        <div class="print-slip-row">
+          <span class="print-slip-label">Time:</span>
+          <span id="print-time">12:00 PM</span>
+        </div>
+      </div>
+      <div class="print-slip-footer">
+        Present this token slip to claim your item.<br>
+        Keep it safe!
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN SCRIPT -->
+  <script src="app.js" defer></script>
+</body>
+</html>
