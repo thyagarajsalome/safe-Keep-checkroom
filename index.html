@@ -496,6 +496,14 @@
                 </select>
               </div>
               
+              <div class="form-group">
+                <label class="form-label" for="settings-token-format">Token Number Format</label>
+                <select class="form-select" id="settings-token-format">
+                  <option value="sequential">Normal Numbers (e.g. 004)</option>
+                  <option value="prefix">Prefix Format (e.g. F1-004)</option>
+                </select>
+              </div>
+              
               <button type="submit" class="btn btn-primary">
                 Save Active Context
               </button>
@@ -591,6 +599,39 @@
                 Wipe Entire Database (Factory Reset)
               </button>
             </div>
+          </div>
+          
+          <!-- Security Settings Panel -->
+          <div class="settings-panel">
+            <h3>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Security Settings
+            </h3>
+            <p class="settings-info-text">Protect the Settings page from unauthorized access by registering the Checkroom Overseer. If enabled, accessing Settings will require verification.</p>
+            
+            <form id="settings-security-form">
+              <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <input type="checkbox" id="settings-security-enable" style="width: auto; cursor: pointer;">
+                <label for="settings-security-enable" class="form-label" style="margin-bottom: 0; cursor: pointer;">Enable Overseer Gatekeeper</label>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="settings-overseer-name">Overseer Full Name</label>
+                <input type="text" class="form-input" id="settings-overseer-name" placeholder="e.g. Brother Johnathan Smith">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="settings-overseer-mobile">Overseer Mobile Number (Unlock Code)</label>
+                <input type="text" class="form-input" id="settings-overseer-mobile" placeholder="e.g. 9876543210">
+              </div>
+              
+              <button type="submit" class="btn btn-primary">
+                Save Security Settings
+              </button>
+            </form>
           </div>
           
         </div>
@@ -719,6 +760,32 @@
         <div class="button-group">
           <button type="button" class="btn btn-secondary" id="edit-btn-cancel" style="flex: 1;">Cancel</button>
           <button type="submit" class="btn btn-primary" style="flex: 1;">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SECURITY UNLOCK DIALOG (ACCESS CONTROL) -->
+  <div class="token-modal-overlay" id="security-unlock-modal" style="display: none;">
+    <div class="token-modal" style="max-width: 400px; text-align: center;">
+      <div class="token-modal-badge" style="background-color: var(--warning-bg); color: var(--warning); border-radius: 999px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <h2 style="margin-bottom: 0.5rem;">Overseer Verification</h2>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;" id="security-prompt-text">Settings is locked. Access restricted to Checkroom Overseer only.</p>
+      
+      <form id="security-unlock-form">
+        <div class="form-group" style="text-align: left;">
+          <label class="form-label" for="security-unlock-mobile">Enter Overseer's Mobile Number</label>
+          <input type="password" class="form-input" id="security-unlock-mobile" placeholder="Overseer Phone Number" required autocomplete="off" style="text-align: center; font-size: 1.25rem;">
+        </div>
+        
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" id="security-unlock-btn-cancel" style="flex: 1;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Verify & Unlock</button>
         </div>
       </form>
     </div>

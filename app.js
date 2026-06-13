@@ -13,7 +13,11 @@ const DEFAULT_SETTINGS = {
   conventionSubtitle: "Checkroom Department — Assembly Hall",
   activeDay: "F",       // F = Friday, S = Saturday, U = Sunday
   activeSession: "1",   // 1 = Morning/Afternoon, 2 = Afternoon/Evening
-  theme: "dark"
+  theme: "dark",
+  tokenFormat: "sequential", // "sequential" = 004, "prefix" = F1-004
+  securityEnabled: false,
+  overseerName: "",
+  overseerMobile: ""
 };
 
 const DEFAULT_COUNTERS = {
@@ -28,6 +32,9 @@ let state = {
   counters: { ...DEFAULT_COUNTERS },
   items: []
 };
+
+// Security Session Lock state
+let isSettingsUnlocked = false;
 
 // Quick References to DOM Elements
 const DOM = {
@@ -97,6 +104,16 @@ const DOM = {
   settingsBtnExportJson: document.getElementById('settings-btn-export-json'),
   settingsBtnResetCounters: document.getElementById('settings-btn-reset-counters'),
   settingsBtnClearDb: document.getElementById('settings-btn-clear-db'),
+  settingsTokenFormat: document.getElementById('settings-token-format'),
+  settingsSecurityForm: document.getElementById('settings-security-form'),
+  settingsSecurityEnable: document.getElementById('settings-security-enable'),
+  settingsOverseerName: document.getElementById('settings-overseer-name'),
+  settingsOverseerMobile: document.getElementById('settings-overseer-mobile'),
+  
+  securityUnlockModal: document.getElementById('security-unlock-modal'),
+  securityUnlockForm: document.getElementById('security-unlock-form'),
+  securityUnlockMobile: document.getElementById('security-unlock-mobile'),
+  securityUnlockBtnCancel: document.getElementById('security-unlock-btn-cancel'),
   
   // Popups & Modal Overlays
   tokenModal: document.getElementById('token-modal'),
@@ -284,6 +301,11 @@ function applySettingsToDOM() {
   DOM.settingsConventionName.value = state.settings.conventionName;
   DOM.settingsConventionSubtitle.value = state.settings.conventionSubtitle;
   
+  DOM.settingsTokenFormat.value = state.settings.tokenFormat || 'sequential';
+  DOM.settingsSecurityEnable.checked = state.settings.securityEnabled || false;
+  DOM.settingsOverseerName.value = state.settings.overseerName || '';
+  DOM.settingsOverseerMobile.value = state.settings.overseerMobile || '';
+  
   // Update quick switch modal form inputs
   DOM.quickActiveDay.value = state.settings.activeDay;
   DOM.quickActiveSession.value = state.settings.activeSession;
@@ -299,8 +321,11 @@ function getNextTokenDetails() {
   const nextCount = currentCount + 1;
   const paddedSequence = String(nextCount).padStart(3, '0');
   
+  const format = state.settings.tokenFormat || 'sequential';
+  const tokenString = format === 'sequential' ? paddedSequence : `${key}-${paddedSequence}`;
+  
   return {
-    tokenString: `${key}-${paddedSequence}`,
+    tokenString: tokenString,
     sequence: nextCount,
     key: key
   };
@@ -713,15 +738,15 @@ function searchAndDisplayToken(query) {
     return;
   }
   
-  // Search items. Prioritize exact token match. If not, match substring of token.
-  let matchedItem = state.items.find(i => i.token.toUpperCase() === cleanQuery);
+  // Search items. Prioritize exact token matches first.
+  let matches = state.items.filter(i => i.token.toUpperCase() === cleanQuery);
   
-  if (!matchedItem) {
+  if (matches.length === 0) {
     // Try loose search
-    matchedItem = state.items.find(i => i.token.toUpperCase().includes(cleanQuery));
+    matches = state.items.filter(i => i.token.toUpperCase().includes(cleanQuery));
   }
   
-  if (!matchedItem) {
+  if (matches.length === 0) {
     DOM.checkoutResultArea.innerHTML = `
       <div class="empty-search-state" style="border-color: var(--danger);">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--danger)">
@@ -736,7 +761,60 @@ function searchAndDisplayToken(query) {
     return;
   }
   
-  showCheckoutItemDetail(matchedItem);
+  if (matches.length === 1) {
+    showCheckoutItemDetail(matches[0]);
+  } else {
+    // Multiple matches found (common with sequential numbers across sessions/days)
+    // Sort matches: held items first, then by date descending
+    matches.sort((a, b) => {
+      if (a.status !== b.status) {
+        return a.status === 'held' ? -1 : 1;
+      }
+      return new Date(b.checkedInAt) - new Date(a.checkedInAt);
+    });
+    
+    DOM.checkoutResultArea.innerHTML = `
+      <div class="empty-search-state" style="border-color: var(--accent-primary); text-align: left;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" style="margin: 0 auto 1rem auto; display: block; width: 3rem; height: 3rem;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <h3 style="text-align: center; margin-bottom: 0.5rem; color: var(--text-primary);">Multiple Items Found (${matches.length})</h3>
+        <p style="text-align: center; margin-bottom: 1.5rem; font-size: 0.85rem;">Select the correct item associated with token <b>${query}</b>:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 280px; overflow-y: auto;">
+          ${matches.map(item => {
+            const isHeld = item.status === 'held';
+            const statusLabel = isHeld ? 'Held (Active)' : 'Returned';
+            const statusClass = isHeld ? 'held' : 'returned';
+            const dayStr = getDayName(item.day);
+            return `
+              <div class="held-item-mini-card select-match-card" data-id="${item.id}" style="border-left: 4px solid ${isHeld ? 'var(--success)' : 'var(--text-tertiary)'}; margin-bottom: 2px;">
+                <div class="held-item-mini-header">
+                  <span class="held-item-mini-token" style="font-size: 1.15rem;">${item.token}</span>
+                  <span class="status-badge ${statusClass}">${statusLabel} (${dayStr} S${item.session})</span>
+                </div>
+                <div class="held-item-mini-name">${item.ownerName || 'Anonymous'} — <span style="font-weight: normal; font-size: 0.8rem;">${item.type}</span></div>
+                <div class="held-item-mini-notes" style="font-size: 0.75rem; color: var(--text-secondary);">${item.notes || 'No description notes'}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    
+    // Bind click events on the select match cards
+    DOM.checkoutResultArea.querySelectorAll('.select-match-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.getAttribute('data-id');
+        const item = state.items.find(i => i.id === id);
+        if (item) {
+          showCheckoutItemDetail(item);
+        }
+      });
+    });
+  }
 }
 
 function showCheckoutItemDetail(item) {
@@ -889,6 +967,20 @@ function closeEditModal() {
 // ==========================================
 
 function switchTab(viewId) {
+  // Check security restriction for Settings
+  if (viewId === 'settings' && state.settings.securityEnabled && !isSettingsUnlocked) {
+    // Show unlock modal instead
+    DOM.securityUnlockMobile.value = '';
+    DOM.securityUnlockModal.style.display = 'flex';
+    DOM.securityUnlockMobile.focus();
+    return; // Block navigation
+  }
+
+  // If navigating away from Settings, lock it again
+  if (viewId !== 'settings') {
+    isSettingsUnlocked = false;
+  }
+
   DOM.navTabs.forEach(tab => {
     if (tab.getAttribute('data-view') === viewId) {
       tab.classList.add('active');
@@ -1206,11 +1298,12 @@ function setupEventListeners() {
     e.preventDefault();
     state.settings.activeDay = DOM.settingsActiveDay.value;
     state.settings.activeSession = DOM.settingsActiveSession.value;
+    state.settings.tokenFormat = DOM.settingsTokenFormat.value;
     saveSettings();
     applySettingsToDOM();
     updateCheckinPreview();
     renderAll();
-    showToast("Active day and session configuration saved.", "success");
+    showToast("Active session and token format settings saved.", "success");
   });
   
   // Settings Branding update
@@ -1282,6 +1375,51 @@ function setupEventListeners() {
       closeEditModal();
       showToast(`Successfully updated details for ${item.token}.`, "success");
     }
+  });
+  
+  // Settings Security form submit
+  DOM.settingsSecurityForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const enable = DOM.settingsSecurityEnable.checked;
+    const name = DOM.settingsOverseerName.value.trim();
+    const mobile = DOM.settingsOverseerMobile.value.trim();
+    
+    if (enable && (!name || !mobile)) {
+      showToast("To enable gatekeeper security, Overseer Name and Mobile Number are required.", "warning");
+      return;
+    }
+    
+    state.settings.securityEnabled = enable;
+    state.settings.overseerName = name;
+    state.settings.overseerMobile = mobile;
+    saveSettings();
+    applySettingsToDOM();
+    showToast("Overseer Security settings saved.", "success");
+  });
+  
+  // Security Unlock Form submit
+  DOM.securityUnlockForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const enteredCode = DOM.securityUnlockMobile.value.trim();
+    const storedCode = state.settings.overseerMobile || '';
+    
+    if (enteredCode === storedCode) {
+      isSettingsUnlocked = true;
+      DOM.securityUnlockModal.style.display = 'none';
+      showToast("Access granted. Welcome, Overseer!", "success");
+      switchTab('settings'); // Navigate to settings now that it is unlocked
+    } else {
+      showToast("Verification failed. Incorrect Overseer mobile number.", "danger");
+      DOM.securityUnlockMobile.value = '';
+      DOM.securityUnlockMobile.focus();
+    }
+  });
+  
+  // Security Unlock cancel
+  DOM.securityUnlockBtnCancel.addEventListener('click', () => {
+    DOM.securityUnlockModal.style.display = 'none';
+    showToast("Access denied. Returning to dashboard.", "info");
+    switchTab('dashboard');
   });
 }
 
