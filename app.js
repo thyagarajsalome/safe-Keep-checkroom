@@ -726,7 +726,7 @@ function renderHistoryTable() {
 
 // Search and Display Check-out Result
 function searchAndDisplayToken(query) {
-  const cleanQuery = query.trim().toUpperCase();
+  let cleanQuery = query.trim().toUpperCase();
   if (!cleanQuery) {
     DOM.checkoutResultArea.innerHTML = `
       <div class="empty-search-state" id="checkout-search-status">
@@ -739,6 +739,11 @@ function searchAndDisplayToken(query) {
       </div>
     `;
     return;
+  }
+  
+  // If search is numeric and shorter than 3 digits, pad it (e.g. 4 -> 004) for quick checkouts
+  if (/^\d+$/.test(cleanQuery)) {
+    cleanQuery = cleanQuery.padStart(3, '0');
   }
   
   // Search items. Prioritize exact token matches first.
@@ -1043,7 +1048,7 @@ function exportCSV() {
     csvContent += `${token},${status},${type},${name},${notes},${checkin},${checkout},${day},${session}\n`;
   });
   
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   
   const link = document.createElement("a");
@@ -1250,7 +1255,8 @@ function setupEventListeners() {
       const newlyCreatedItem = state.items[state.items.length - 1];
       
       if (parentItem && newlyCreatedItem) {
-        // Link them
+        // Link them (with array safety check for older records)
+        if (!parentItem.reCheckins) parentItem.reCheckins = [];
         parentItem.reCheckins.push(newlyCreatedItem.token);
         newlyCreatedItem.previousToken = parentItem.token;
         saveItems();
