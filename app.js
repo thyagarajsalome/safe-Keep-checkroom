@@ -109,6 +109,9 @@ const DOM = {
   settingsSecurityEnable: document.getElementById('settings-security-enable'),
   settingsOverseerName: document.getElementById('settings-overseer-name'),
   settingsOverseerMobile: document.getElementById('settings-overseer-mobile'),
+  settingsBtnPrintManual: document.getElementById('settings-btn-print-manual'),
+  printManualContainer: document.getElementById('print-manual-container'),
+  manualTicketTemplate: document.getElementById('manual-ticket-template'),
   
   securityUnlockModal: document.getElementById('security-unlock-modal'),
   securityUnlockForm: document.getElementById('security-unlock-form'),
@@ -1420,6 +1423,30 @@ function setupEventListeners() {
     DOM.securityUnlockModal.style.display = 'none';
     showToast("Access denied. Returning to dashboard.", "info");
     switchTab('dashboard');
+  });
+  
+  // Emergency Manual Tickets printing trigger
+  DOM.settingsBtnPrintManual.addEventListener('click', () => {
+    // Enable print manual mode on body
+    document.body.classList.add('print-manual-mode');
+    
+    // Clear and build the print manual page
+    const pageWrapper = DOM.printManualContainer.querySelector('.manual-tickets-page');
+    pageWrapper.innerHTML = '';
+    
+    // Create 4 tickets using the template
+    for (let i = 0; i < 4; i++) {
+      const clone = DOM.manualTicketTemplate.content.cloneNode(true);
+      pageWrapper.appendChild(clone);
+    }
+    
+    // Trigger print dialog
+    window.print();
+  });
+
+  // Handle cleaning up print manual mode classes after printing
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('print-manual-mode');
   });
 }
 

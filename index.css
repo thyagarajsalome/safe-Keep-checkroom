@@ -1611,3 +1611,126 @@ footer a {
 footer a:hover {
   text-decoration: underline;
 }
+
+/* ==========================================
+   EMERGENCY OFFLINE MANUAL TICKET PRINT STYLES
+   ========================================== */
+
+#print-manual-container {
+  display: none;
+}
+
+@media print {
+  /* Hide standard screens during manual ticket generation */
+  body.print-manual-mode .app-container {
+    display: none !important;
+  }
+  body.print-manual-mode #print-slip-container {
+    display: none !important;
+  }
+  body.print-manual-mode #print-manual-container {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    color: #000000 !important;
+    background-color: #ffffff !important;
+  }
+  
+  body.print-manual-mode .manual-tickets-page {
+    display: flex;
+    flex-direction: column;
+    gap: 8mm;
+    padding: 4mm;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  
+  body.print-manual-mode .manual-ticket-card {
+    display: flex;
+    border: 2.5px solid #000000;
+    border-radius: 4px;
+    height: 60mm;
+    width: 100%;
+    box-sizing: border-box;
+    page-break-inside: avoid;
+    background-color: #ffffff;
+    color: #000000;
+  }
+  
+  body.print-manual-mode .manual-ticket-part {
+    flex: 1;
+    padding: 4mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    color: #000000;
+  }
+  
+  body.print-manual-mode .claim-part {
+    border-right: 2px dashed #000000;
+  }
+  
+  body.print-manual-mode .manual-ticket-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 0;
+    position: relative;
+    overflow: visible;
+  }
+  
+  body.print-manual-mode .manual-ticket-divider::before {
+    content: '✂️';
+    position: absolute;
+    font-size: 14pt;
+    background-color: #ffffff;
+    color: #000000;
+    padding: 2mm 0;
+    left: -7px;
+    top: calc(50% - 12px);
+    z-index: 10;
+  }
+  
+  body.print-manual-mode .manual-ticket-header {
+    font-size: 11pt;
+    font-weight: 800;
+    text-align: center;
+    border-bottom: 2px solid #000000;
+    padding-bottom: 1.5mm;
+    margin-bottom: 2mm;
+  }
+  
+  body.print-manual-mode .manual-ticket-token-box {
+    border: 1.5px solid #000000;
+    padding: 2mm;
+    text-align: left;
+    font-weight: 800;
+    font-size: 12pt;
+    height: 8mm;
+    line-height: 8mm;
+    margin-bottom: 2mm;
+  }
+  
+  body.print-manual-mode .manual-ticket-fields {
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 2mm;
+    font-weight: 600;
+  }
+  
+  body.print-manual-mode .manual-ticket-footer {
+    font-size: 8pt;
+    font-style: italic;
+    text-align: center;
+    border-top: 1.5px solid #000000;
+    padding-top: 1.5mm;
+    margin-top: auto;
+    font-weight: 500;
+  }
+}
