@@ -127,6 +127,7 @@ const DOM = {
   modalDatetime: document.getElementById('modal-datetime'),
   modalBtnPrint: document.getElementById('modal-btn-print'),
   modalBtnClose: document.getElementById('modal-btn-close'),
+  modalBtnAddAnother: document.getElementById('modal-btn-add-another'),
   
   sessionSwitchModal: document.getElementById('session-switch-modal'),
   quickSessionForm: document.getElementById('quick-session-form'),
@@ -947,10 +948,27 @@ function showTokenModal(item) {
   DOM.tokenModal.style.display = 'flex';
 }
 
-function closeTokenModal() {
+function closeTokenModal(keepOwner = false) {
   DOM.tokenModal.style.display = 'none';
-  // Return focus to owner input for fast workflow
-  DOM.ownerNameInput.focus();
+  if (keepOwner) {
+    DOM.notesInput.value = '';
+    DOM.notesInput.focus();
+    // Reset type selection back to default (Lunch Box) for next item
+    DOM.itemTypeOptions.forEach(o => o.classList.remove('selected'));
+    DOM.itemTypeOptions[0].classList.add('selected');
+    selectedCheckinType = "Lunch Box";
+    updateCheckinPreview();
+    showToast(`Retained owner "${state.items[state.items.length - 1].ownerName}" for next item.`, "info", 1500);
+  } else {
+    DOM.ownerNameInput.value = '';
+    DOM.notesInput.value = '';
+    DOM.ownerNameInput.focus();
+    // Reset type selection back to default
+    DOM.itemTypeOptions.forEach(o => o.classList.remove('selected'));
+    DOM.itemTypeOptions[0].classList.add('selected');
+    selectedCheckinType = "Lunch Box";
+    updateCheckinPreview();
+  }
 }
 
 function printTokenSlip(item) {
@@ -1280,14 +1298,14 @@ function setupEventListeners() {
       DOM.checkinForm.dataset.linkingFrom = '';
     }
     
-    // Reset Form fields
-    DOM.ownerNameInput.value = '';
-    DOM.notesInput.value = '';
   });
   
   // Modal Dialogue close
   DOM.modalBtnClose.addEventListener('click', () => {
-    closeTokenModal();
+    closeTokenModal(false);
+  });
+  DOM.modalBtnAddAnother.addEventListener('click', () => {
+    closeTokenModal(true);
   });
   
   // Check-Out live query listener
